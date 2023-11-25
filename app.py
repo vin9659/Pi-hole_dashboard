@@ -18,6 +18,8 @@ def root():
 
 
 pihole_api_url_summary = f"http://{settings.PIHOLE_IP}/admin/api.php?summary&auth={settings.AUTH}"
+pihole_api_url = f"http://{settings.PIHOLE_IP}/admin/api.php"
+
 
 @app.get("/pihole/summary")
 def get_pihole_summary():
@@ -64,4 +66,53 @@ def send_mail(ads_threshold: int):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
+@app.post("/pihole/domains/add_whitelist")
+def add_whitelist(domain: str):
+    try:
+        response = requests.post(f"{pihole_api_url}?add_whitelist={domain}")
+        if response.status_code == 200:
+            print(f"Domain '{domain}' whitelisted successfully.")
+
+        else:
+            print(f"Error whitelisting domain '{domain}'.")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/pihole/domains/add_blacklist")
+def add_blacklist(domain: str):
+    try:
+        response = requests.post(f"{pihole_api_url}?add_blacklist={domain}")
+        if response.status_code == 200:
+            print(f"Domain '{domain}' blacklisted successfully.")
+
+        else:
+            print(f"Error blacklisting domain '{domain}'.")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/pihole/enable")
+def enable_pihole():
+    try:
+        response = requests.post(f"{pihole_api_url}?enable")
+        if response.status_code == 200:
+            print("Pi-hole enabled.")
+        else:
+            print("Error enabling Pi-hole.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/pihole/disable")
+def disable_pihole():
+    try:
+        response = requests.post(f"{pihole_api_url}?disable=1")
+        if response.status_code == 200:
+            print("Pi-hole disabled indefinitely.")
+        else:
+            print("Error disabling Pi-hole.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
