@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+            body {
+        font-family: 'trebuchet ms',sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    .sidebar {
+        width: 200px;
+        height: 100%;
+        position: fixed;
+        background-color: #384988;
+        padding-top: 20px;
+        color: white;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .tab {
+        padding: 8px;
+        margin-bottom: 5px;
+        cursor: pointer;
+    }
+
+    .tab:hover {
+        background-color: #9CA7FF;
+        color:white;
+    }
+
+    .section {
+        margin-left: 220px;
+        padding: 20px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .active {
+        background-color: #4C5BA0;
+        color: #9CA7FF;
+        border-radius: 6px;
+    }
+
+      .container {
+        background-color: #fff;
+        margin: 20px;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #384988;
+    }
+
+    .date-input {
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .notification-container {
+        background-color: #e6e6e6;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+    }
+
+    .switch_div{
+        display: flex;
+        flex-direction: row;
+
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        -webkit-transition: .4s;
+        transition: .4s;
+    }
+
+    input:checked + .slider {
+        background-color: #2196F3;
+    }
+
+    input:focus + .slider {
+        box-shadow: 0 0 1px #2196F3;
+    }
+
+    input:checked + .slider:before {
+        -webkit-transform: translateX(26px);
+        -ms-transform: translateX(26px);
+        transform: translateX(26px);
+    }
+
+    .slider.round {
+        border-radius: 34px;
+    }
+
+    .slider.round:before {
+        border-radius: 50%;
+    }
+
+    #piholeStatus{
+        padding-left: 10px;
+    }
+
+
+    table {
+
+        border-collapse: collapse;
+
+        margin: 20px auto;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+
+    .domain-management {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 50px;
+        width: 60%;
+
+    }
+
+    .domain-management label {
+        margin-right: 10px;
+    }
+
+    .domain-management input {
+        padding: 8px;
+        flex: 1;
+    }
+
+    .domain-management button {
+        padding: 8px 16px;
+        margin-left: 10px;
+        cursor: pointer;
+        background-color: #3282CE;
+        color: white;
+        border-radius: 6px;
+        border: none;
+    }
+
+
+    .value-setter {
+        display: flex;
+        align-items: center;
+        margin: 20px;
+    }
+
+    .value-setter label {
+        margin-right: 10px;
+    }
+
+    .value-setter input[type="range"] {
+        width: 150px;
+    }
+
+    .value-setter button {
+        padding: 8px 46px;
+        margin-left: 10px;
+        cursor: pointer;
+        background-color: #3282CE;
+        color: white;
+        border-radius: 6px;
+        border: none;
+    }
+
+    .slider-value-label {
+        font-size: 10px;
+        color: gray;
+    }
+
+
+    </style>
+
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="tab active" onclick="changeSection(1)">Pi-hole Status</div>
+    <div class="tab" id="whitelist_blacklist" onclick="changeSection(2)">Whitelist/Blacklist Domain</div>
+    <div class="tab" onclick="changeSection(3)">Email Alerts - Configuration</div>
+</div>
+
+<div class="section" id="section1">
+    <div class="container">
+        <div class="header">
+            <h2>Pi-hole Status</h2>
+            <input type="date" class="date-input" id="todayDate" disabled>
+            <!-- <label for="piholeToggle">Pi-hole:</label> -->
+            <div class="switch_div">
+    <label class="switch">
+        <input type="checkbox" id="piholeToggle" onchange="togglePiHole()">
+        <span class="slider round"></span>
+    </label>
+    <span id="piholeStatus">Disabled</span>
+</div>
+        </div>
+
+        <div class="notification-container">
+            <h3>Pi-hole Statistics: </h3>
+            <p>Blocked Domains: {{data.domains_being_blocked}}</p>
+            <p>DNS Queries Today: {{data.dns_queries_today}}</p>
+            <p>Ads Blocked Today: {{data.ads_blocked_today}}</p>
+            <p>Unique Domains: {{data.unique_domains}}</p>
+            <p>Queries Forwarded: {{data.queries_forwarded}}</p>
+            <p>Queries Cached: {{data.queries_cached}}</p>
+            <p>Unique Clients: {{data.unique_clients}}</p>
+        </div>
+    </div>
+</div>
+
+<div class="section hidden" id="section2">
+    <div class="container">
+        <div class="header">
+            <h2>Whitelist/Blacklist Domains</h2>
+            <input type="date" class="date-input" id="todayDate2" disabled>
+
+        </div>
+
+       <div>
+        <table id="domainsTable">
+            <thead>
+            <tr>
+                <th>Whitelisted Domains</th>
+                <th>Blacklisted Domains</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+
+        </table>
+       </div>
+
+       <div class="domain-management">
+        <label for="domainInput">Enter Domain:</label>
+        <input type="text" id="domainInput" placeholder="Type URL here..">
+        <button id="postWhitelistDataButton">Whitelist</button>
+        <button  id="postBlacklistDataButton">Blacklist</button>
+    </div>
+
+
+    </div>
+</div>
+
+<div class="section hidden" id="section3">
+    <div class="container">
+        <div class="header">
+            <h2>Email Alerts - Configuration</h2>
+            <input type="date" class="date-input" id="todayDate3" disabled>
+
+        </div>
+
+        <div class="value-setter">
+            <label for="valueRange">Select Range:</label>
+            <input type="range" id="valueRange" min="0" max="5000" step="1" value="100" oninput="updateSliderValue()">
+            <span id="sliderValueLabel" class="slider-value-label">100</span>
+            <button onclick="setValue()">Set</button>
+        </div>
+
+
+    </div>
+
+</div>
+
+<script>
+      document.addEventListener('DOMContentLoaded', function () {
+              fetch('/pihole/get_enabled_status')
+            .then(response => response.json())
+            .then(enabledStatus => {
+                console.log("Pihole Enabled Status:", enabledStatus);
+                // You can update the UI or perform other actions based on the enabled status
+                  // Update the checkbox state based on the enabled status
+                var piholeToggle = document.getElementById("piholeToggle");
+                var statusElement = document.getElementById("piholeStatus");
+
+                if (enabledStatus.status === 'enabled') {
+                    piholeToggle.checked = true;
+                    statusElement.innerText = "Enabled";
+
+                } else {
+                    piholeToggle.checked = false;
+                    statusElement.innerText = "Disabled";
+
+                }
+            })
+            .catch(error => console.error('Error fetching enabled status:', error));
+
+            // For Range
+
+             fetch('/pihole/get_email_threshold')
+                .then(response => response.json())
+                .then(data => {
+                    // Assuming the response structure is like: { "threshold": 100 }
+                    //console.log(data)
+                    var currentEmailThreshold = data;
+
+                    // Update the range input and display with the fetched value
+                    var valueRange = document.getElementById("valueRange");
+                    var sliderValueLabel = document.getElementById("sliderValueLabel");
+
+                    valueRange.value = currentEmailThreshold
+                    sliderValueLabel.innerText = currentEmailThreshold;
+                })
+                .catch(error => console.error('Error fetching email threshold:', error));
+    });
+
+
+    document.getElementById('todayDate').valueAsDate = new Date();
+    document.getElementById('todayDate2').valueAsDate = new Date();
+    document.getElementById('todayDate3').valueAsDate = new Date();
+
+    function changeSection(sectionNumber) {
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(function (section) {
+            section.classList.add('hidden');
+        });
+
+        // Remove 'active' class from all tabs
+        document.querySelectorAll('.tab').forEach(function (tab) {
+            tab.classList.remove('active');
+        });
+
+        // Show the selected section
+        document.getElementById('section' + sectionNumber).classList.remove('hidden');
+
+        // Add 'active' class to the clicked tab
+        document.querySelector('.tab:nth-child(' + sectionNumber + ')').classList.add('active');
+    }
+
+    function togglePiHole() {
+        var toggleSwitch = document.getElementById("piholeToggle");
+        var statusElement = document.getElementById("piholeStatus");
+
+        if (toggleSwitch.checked) {
+            // Pi-hole is enabled
+            statusElement.innerText = "Enabled";
+            // You can add logic here to enable Pi-hole
+        } else {
+            // Pi-hole is disabled
+            statusElement.innerText = "Disabled";
+            // You can add logic here to disable Pi-hole
+        }
+    }
+
+        const checkbox = document.getElementById('piholeToggle');
+
+        checkbox.addEventListener('change', async () => {
+            const isChecked = checkbox.checked;
+
+            // Send a request to the backend to enable or disable based on the checkbox state
+            const response = await fetch(isChecked ? '/pihole/enable' : '/pihole/disable', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log(result);
+            } else {
+                console.error('Failed to update pihole status');
+            }
+        });
+
+    function updateSliderValue() {
+        var valueRange = document.getElementById("valueRange");
+        var sliderValueLabel = document.getElementById("sliderValueLabel");
+        sliderValueLabel.innerText = valueRange.value;
+    }
+
+    // Post Whitelisted/Blacklisted
+function updateTable(data) {
+        var tableBody = document.getElementById("domainsTable").getElementsByTagName('tbody')[0];
+
+        // Check if table body exists
+        if (!tableBody) {
+            console.error("Table body not found");
+            return;
+        }
+
+        // Clear existing rows
+        tableBody.innerHTML = "";
+
+        // Function to create rows for domains
+        function addDomainsToTable(domains, cellIndex) {
+            if (domains) {
+                // Split the domain string and filter out empty strings
+                var domainArray = domains.split(',').filter(Boolean);
+
+                // Find or create rows for the domains
+                for (var i = 0; i < domainArray.length; i++) {
+                    var row = tableBody.rows[i];
+
+                    // If the row doesn't exist, create a new row
+                    if (!row) {
+                        row = tableBody.insertRow(i);
+                    }
+
+                    // Ensure the cell index is within the valid range
+                    var actualCellIndex = Math.min(cellIndex, row.cells.length);
+
+                    // Add cell for the domain
+                    var cell = row.insertCell(actualCellIndex);
+                    cell.innerHTML = domainArray[i];
+                }
+            }
+        }
+
+        // Populate the table with blacklist and whitelist data
+        addDomainsToTable(data.Blacklist, 1);  // 0 corresponds to the first column (blacklist)
+        addDomainsToTable(data.Whitelist, 0);  // 1 corresponds to the second column (whitelist)
+    }
+
+
+    // Function to perform the POST request
+        async function postWhiteListData() {
+            try {
+                const inputData = document.getElementById('domainInput').value;
+
+              const response = await fetch('/pihole/domains/add_whitelist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    domain: inputData,
+                }),
+            });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(result);
+
+                    document.getElementById('domainInput').value = '';
+                    fetch('/pihole/domains/get_blacklist_whitelist')
+                    .then(response => response.json())
+                    .then(data => updateTable(data))
+                    .catch(error => console.error('Error during fetch:', error));
+
+
+                } else {
+                    console.error('Failed to process data');
+                }
+            } catch (error) {
+                console.error('Error during POST request:', error);
+            }
+        }
+
+        // Attach the postData function to the button click event
+        document.getElementById('postWhitelistDataButton').addEventListener('click', postWhiteListData);
+
+    // For Blacklist
+     async function postBlackListData() {
+            try {
+                const inputData = document.getElementById('domainInput').value;
+
+              const response = await fetch('/pihole/domains/add_blacklist', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    domain: inputData,
+                }),
+            });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log(result);
+
+                    document.getElementById('domainInput').value = '';
+                    fetch('/pihole/domains/get_blacklist_whitelist')
+                    .then(response => response.json())
+                    .then(data => updateTable(data))
+                    .catch(error => console.error('Error during fetch:', error));
+
+                } else {
+                    console.error('Failed to process data');
+                }
+            } catch (error) {
+                console.error('Error during POST request:', error);
+            }
+        }
+
+        // Attach the postData function to the button click event
+        document.getElementById('postBlacklistDataButton').addEventListener('click', postBlackListData);
+
+        const whitelist_blacklistDiv = document.getElementById('whitelist_blacklist');
+        const domainsTableBody = document.querySelector('#domainsTable tbody');
+        var tableBody = document.getElementById("domainsTable").getElementsByTagName('tbody')[0];
+
+            const fetchData = async (url) => {
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log(data);
+                    // Handle the data as needed
+                    // Check if table body exists
+        if (!tableBody) {
+            console.error("Table body not found");
+            return;
+        }
+
+        // Clear existing rows
+        tableBody.innerHTML = "";
+
+      // Function to create rows for domains
+         function addDomainsToTable(domains, cellIndex) {
+            if (domains) {
+                // Split the domain string and filter out empty strings
+                var domainArray = domains.split(',').filter(Boolean);
+
+                // Find or create rows for the domains
+                for (var i = 0; i < domainArray.length; i++) {
+                    var row = tableBody.rows[i];
+
+                    // If the row doesn't exist, create a new row
+                    if (!row) {
+                        row = tableBody.insertRow(i);
+                    }
+
+                    // Ensure the cell index is within the valid range
+                    var actualCellIndex = Math.min(cellIndex, row.cells.length);
+
+                    // Add cell for the domain
+                    var cell = row.insertCell(actualCellIndex);
+                    cell.innerHTML = domainArray[i];
+                }
+            }
+        }
+
+        // Populate the table with blacklist and whitelist data
+        addDomainsToTable(data.Blacklist, 1);  // 0 corresponds to the first column (blacklist)
+        addDomainsToTable(data.Whitelist, 0);  // 1 corresponds to the second column (whitelist)
+
+
+                } else {
+                    console.error('Failed to fetch data');
+                }
+            } catch (error) {
+                console.error('Error during fetch:', error);
+            }
+        };
+
+        whitelist_blacklistDiv.addEventListener('click', () => {
+            fetchData('/pihole/domains/get_blacklist_whitelist');
+        });
+
+    function setValue(){
+            var valueRange = document.getElementById("valueRange");
+            var thresholdValue = parseInt(valueRange.value)
+            console.log(thresholdValue)
+
+            fetch('/pihole/set_email_threshold', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    threshold: thresholdValue
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Threshold updated successfully');
+                } else {
+                    console.error('Failed to update threshold:', response.status, response.statusText);
+                }
+            })
+            .catch(error => console.error('Error during threshold update:', error));
+        }
+
+</script>
+
+</body>
+</html>
